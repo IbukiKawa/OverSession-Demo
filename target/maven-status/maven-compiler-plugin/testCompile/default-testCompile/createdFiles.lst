@@ -1,0 +1,5 @@
+com/oversession/integration/OverSessionIntegrationTest.class
+com/oversession/dao/impl/InMemoryReactionDaoTest.class
+com/oversession/dao/impl/InMemoryMessageDaoTest.class
+com/oversession/dao/impl/InMemoryRoomDaoTest.class
+com/oversession/dao/impl/InMemoryUserDaoTest.class

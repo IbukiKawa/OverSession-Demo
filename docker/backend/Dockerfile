@@ -1,18 +1,18 @@
-#1 gradleを使ってbuild。jarの作成
+#1 Mavenを使ってbuild。jarの作成
 FROM eclipse-temurin:21-jdk-alpine AS builder
 
 WORKDIR /app
-#gradleの設定ファイルをコピー
-COPY build.gradle settings.gradle ./
-COPY gradle ./gradle
-COPY gradlew ./
-RUN chmod +x gradlew
+#Mavenの設定ファイルをコピー
+COPY pom.xml ./
+COPY mvnw ./
+COPY .mvn ./.mvn
+RUN chmod +x mvnw
 #依存パッケージのダウンロード
-RUN ./gradlew dependencies --no-daemon
+RUN ./mvnw dependency:go-offline -B
 
 #ソースコードをコピーしてビルド
 COPY src ./src
-RUN ./gradlew bootJar --no-daemon
+RUN ./mvnw package -DskipTests -B
 
 #2 buildしたファイルをJREで実行
 FROM eclipse-temurin:21-jre-alpine AS production
@@ -23,7 +23,7 @@ RUN addgroup -g 1001 appuser && \
     adduser -u 1001 -G appuser -s /bin/sh -D appuser
 
 #buildしたjarだけコピー
-COPY --from=builder /app/build/libs/*.jar app.jar
+COPY --from=builder /app/target/*.jar app.jar
 
 RUN chown -R appuser:appuser /app
 USER appuser

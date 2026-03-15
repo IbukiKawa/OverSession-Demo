@@ -3,13 +3,17 @@ package com.oversession.controller;
 import com.oversession.model.User;
 import com.oversession.service.UserService;
 
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
 import java.util.Optional;
 
 /**
- * User REST コントローラー（疑似実装）
- * 実際のSpring Boot環境では @RestController, @RequestMapping などのアノテーションを使用
+ * User REST コントローラー
  */
+@RestController
+@RequestMapping("/api/users")
 public class UserController {
     
     private final UserService userService;
@@ -19,26 +23,25 @@ public class UserController {
     }
 
     /**
-     * GET /api/users
-     * 全ユーザー一覧取得
+     * GET /api/users          → 全ユーザー一覧取得
+     * GET /api/users?userId=xxx → 指定ユーザー取得
      */
-    public List<User> getUsers() {
-        return userService.getAllUsers();
-    }
-
-    /**
-     * GET /api/users/{userId}
-     * 指定ユーザー取得
-     */
-    public Optional<User> getUser(String userId) {
-        return userService.getUserById(userId);
+    @GetMapping
+    public ResponseEntity<?> getUsers(@RequestParam(required = false) String userId) {
+        if (userId != null) {
+            return userService.getUserById(userId)
+                    .map(user -> ResponseEntity.ok((Object) user))
+                    .orElse(ResponseEntity.notFound().build());
+        }
+        return ResponseEntity.ok(userService.getAllUsers());
     }
 
     /**
      * POST /api/users
      * ユーザー登録
      */
-    public String registerUser(User user) {
+    @PostMapping
+    public String registerUser(@RequestBody User user) {
         return userService.registerUser(user);
     }
 
@@ -46,7 +49,8 @@ public class UserController {
      * PUT /api/users/{userId}
      * ユーザー更新
      */
-    public void updateUser(String userId, User user) {
+    @PutMapping("/{userId}")
+    public void updateUser(@PathVariable String userId, @RequestBody User user) {
         user.setUserId(userId);
         userService.updateUser(user);
     }
@@ -55,7 +59,8 @@ public class UserController {
      * DELETE /api/users/{userId}
      * ユーザー削除
      */
-    public void deleteUser(String userId) {
+    @DeleteMapping("/{userId}")
+    public void deleteUser(@PathVariable String userId) {
         userService.deleteUser(userId);
     }
 
@@ -63,7 +68,8 @@ public class UserController {
      * GET /api/users/search?keyword={keyword}
      * ユーザー検索
      */
-    public List<User> searchUsers(String keyword) {
+    @GetMapping("/search")
+    public List<User> searchUsers(@RequestParam String keyword) {
         return userService.searchUsers(keyword);
     }
 }

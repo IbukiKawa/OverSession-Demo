@@ -3,12 +3,15 @@ package com.oversession.service;
 import com.oversession.dao.UserDao;
 import com.oversession.model.User;
 
+import org.springframework.stereotype.Service;
+
 import java.util.List;
 import java.util.Optional;
 
 /**
  * User サービスクラス
  */
+@Service
 public class UserService {
     
     private final UserDao userDao;

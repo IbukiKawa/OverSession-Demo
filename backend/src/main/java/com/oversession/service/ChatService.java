@@ -5,12 +5,15 @@ import com.oversession.dao.MessageDao;
 import com.oversession.model.ChatSummary;
 import com.oversession.model.Message;
 
+import org.springframework.stereotype.Service;
+
 import java.util.List;
 import java.util.Optional;
 
 /**
  * Chat サービスクラス
  */
+@Service
 public class ChatService {
     
     private final ChatDao chatDao;

@@ -3,6 +3,8 @@ package com.oversession.dao.impl;
 import com.oversession.dao.ChatDao;
 import com.oversession.model.ChatSummary;
 
+import org.springframework.stereotype.Repository;
+
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -10,6 +12,7 @@ import java.util.stream.Collectors;
 /**
  * ChatDao のインメモリ実装（テスト・開発用）
  */
+@Repository
 public class InMemoryChatDao implements ChatDao {
 
     private final Map<String, ChatSummary> chats = new ConcurrentHashMap<>();

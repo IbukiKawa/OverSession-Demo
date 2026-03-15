@@ -2,17 +2,19 @@
 FROM eclipse-temurin:21-jdk-alpine AS builder
 
 WORKDIR /app
+
+# Maven Wrapperのインストール
+RUN apk add --no-cache maven
+
 #Mavenの設定ファイルをコピー
 COPY pom.xml ./
-COPY mvnw ./
-COPY .mvn ./.mvn
-RUN chmod +x mvnw
+
 #依存パッケージのダウンロード
-RUN ./mvnw dependency:go-offline -B
+RUN mvn dependency:go-offline -B
 
 #ソースコードをコピーしてビルド
-COPY src ./src
-RUN ./mvnw package -DskipTests -B
+COPY backend/src ./backend/src
+RUN mvn package -DskipTests -B
 
 #2 buildしたファイルをJREで実行
 FROM eclipse-temurin:21-jre-alpine AS production

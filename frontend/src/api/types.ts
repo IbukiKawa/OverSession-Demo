@@ -49,6 +49,10 @@ export interface RegisterUserResponse {
   userId: string;
 }
 
+export interface SearchUserRequest {
+  keywords: string;
+}
+
 // ===================== Chat =====================
 export interface ChatSummary {
   chatId: string;
@@ -92,6 +96,11 @@ export interface SendMessageRequest {
   chatId: string;
   senderUserId: string;
   text: string;
+}
+
+export interface CreateChatRequest {
+  userId1: string,
+  userId2: string,
 }
 
 export interface SendMessageResponse {

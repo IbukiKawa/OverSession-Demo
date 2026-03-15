@@ -1,6 +1,11 @@
 'use client';
 
 import { useState } from 'react';
+import Box from '@mui/material/Box';
+import TextField from '@mui/material/TextField';
+import Button from '@mui/material/Button';
+import Typography from '@mui/material/Typography';
+import Divider from '@mui/material/Divider';
 
 const MAX_LENGTH = 1000;
 
@@ -27,7 +32,7 @@ export default function MessageComposer({ onSend, disabled }: MessageComposerPro
     }
   }
 
-  function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+  function handleKeyDown(e: React.KeyboardEvent) {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSend();
@@ -35,28 +40,38 @@ export default function MessageComposer({ onSend, disabled }: MessageComposerPro
   }
 
   return (
-    <div className="border-t bg-white px-3 py-2">
-      <div className="flex items-end gap-2">
-        <textarea
-          className="flex-1 resize-none border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 min-h-[44px] max-h-32"
+    <Box sx={{ borderTop: 1, borderColor: 'divider', bgcolor: 'background.paper', px: 1.5, py: 1 }}>
+      <Box display="flex" alignItems="flex-end" gap={1}>
+        <TextField
+          fullWidth
+          multiline
+          maxRows={4}
+          size="small"
           placeholder="メッセージを入力してください"
           value={text}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={handleKeyDown}
-          rows={1}
           disabled={disabled || sending}
         />
-        <button
+        <Button
+          variant="contained"
           onClick={handleSend}
           disabled={!canSend}
-          className="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm font-medium disabled:opacity-40 disabled:cursor-not-allowed hover:bg-blue-600 transition-colors"
+          sx={{ whiteSpace: 'nowrap', flexShrink: 0 }}
         >
           {sending ? '送信中…' : '送信'}
-        </button>
-      </div>
-      <div className={`text-right text-xs mt-1 ${isOver ? 'text-red-500 font-semibold' : 'text-gray-400'}`}>
+        </Button>
+      </Box>
+      <Typography
+        variant="caption"
+        display="block"
+        textAlign="right"
+        color={isOver ? 'error' : 'text.secondary'}
+        fontWeight={isOver ? 'bold' : undefined}
+        mt={0.5}
+      >
         {text.length} / {MAX_LENGTH}
-      </div>
-    </div>
+      </Typography>
+    </Box>
   );
 }

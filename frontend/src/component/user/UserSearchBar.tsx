@@ -1,6 +1,9 @@
 'use client';
 
 import { useState } from 'react';
+import Box from '@mui/material/Box';
+import TextField from '@mui/material/TextField';
+import Button from '@mui/material/Button';
 
 interface UserSearchBarProps {
   onSearch: (userId: string) => void;
@@ -16,21 +19,17 @@ export default function UserSearchBar({ onSearch, loading }: UserSearchBarProps)
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex gap-2 mb-4">
-      <input
-        type="text"
+    <Box component="form" onSubmit={handleSubmit} display="flex" gap={1} mb={2}>
+      <TextField
+        size="small"
+        fullWidth
         placeholder="ユーザID（空欄で全件）"
         value={userId}
         onChange={(e) => setUserId(e.target.value)}
-        className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
       />
-      <button
-        type="submit"
-        disabled={loading}
-        className="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm font-medium disabled:opacity-50 hover:bg-blue-600 transition-colors"
-      >
+      <Button type="submit" variant="contained" disabled={loading} sx={{ whiteSpace: 'nowrap' }}>
         {loading ? '検索中…' : '検索'}
-      </button>
-    </form>
+      </Button>
+    </Box>
   );
 }

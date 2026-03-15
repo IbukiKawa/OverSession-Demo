@@ -1,3 +1,6 @@
+import Paper from '@mui/material/Paper';
+import IconButton from '@mui/material/IconButton';
+import Tooltip from '@mui/material/Tooltip';
 import type { ReactionType } from '@/api/types';
 
 const REACTIONS: { type: ReactionType; label: string; emoji: string }[] = [
@@ -16,23 +19,41 @@ export default function ReactionPicker({ onSelect, onClose }: ReactionPickerProp
   return (
     <>
       {/* Backdrop */}
-      <div className="fixed inset-0 z-40" onClick={onClose} />
+      <div style={{ position: 'fixed', inset: 0, zIndex: 40 }} onClick={onClose} />
       {/* Picker */}
-      <div className="absolute z-50 bottom-full mb-1 left-0 flex gap-1 bg-white border border-gray-200 rounded-full shadow-lg px-2 py-1">
+      <Paper
+        elevation={4}
+        sx={{
+          position: 'absolute',
+          bottom: '100%',
+          mb: 0.5,
+          left: 0,
+          display: 'flex',
+          zIndex: 50,
+          borderRadius: 10,
+          px: 0.5,
+          py: 0.25,
+        }}
+      >
         {REACTIONS.map(({ type, label, emoji }) => (
-          <button
-            key={type}
-            title={label}
-            onClick={(e) => {
-              e.stopPropagation();
-              onSelect(type);
-            }}
-            className="text-2xl hover:scale-125 transition-transform px-1"
-          >
-            {emoji}
-          </button>
+          <Tooltip key={type} title={label} placement="top">
+            <IconButton
+              size="small"
+              onClick={(e) => {
+                e.stopPropagation();
+                onSelect(type);
+              }}
+              sx={{
+                fontSize: '1.5rem',
+                transition: 'transform 0.1s',
+                '&:hover': { transform: 'scale(1.25)', bgcolor: 'transparent' },
+              }}
+            >
+              {emoji}
+            </IconButton>
+          </Tooltip>
         ))}
-      </div>
+      </Paper>
     </>
   );
 }

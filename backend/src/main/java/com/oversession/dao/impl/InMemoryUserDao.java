@@ -3,6 +3,8 @@ package com.oversession.dao.impl;
 import com.oversession.dao.UserDao;
 import com.oversession.model.User;
 
+import org.springframework.stereotype.Repository;
+
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -10,6 +12,7 @@ import java.util.stream.Collectors;
 /**
  * UserDao のインメモリ実装（テスト・開発用）
  */
+@Repository
 public class InMemoryUserDao implements UserDao {
 
     private final Map<String, User> users = new ConcurrentHashMap<>();

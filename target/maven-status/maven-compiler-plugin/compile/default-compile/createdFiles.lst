@@ -14,5 +14,6 @@ com/oversession/dao/UserDao.class
 com/oversession/controller/UserController.class
 com/oversession/service/ChatService.class
 com/oversession/model/ChatSummary.class
+com/oversession/OverSessionApplication.class
 com/oversession/dao/impl/InMemoryChatDao.class
 com/oversession/dao/ChatDao.class

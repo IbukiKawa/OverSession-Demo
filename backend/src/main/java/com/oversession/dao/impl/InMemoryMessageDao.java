@@ -4,6 +4,8 @@ import com.oversession.dao.MessageDao;
 import com.oversession.model.Message;
 import com.oversession.model.MessageReaction;
 
+import org.springframework.stereotype.Repository;
+
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -12,6 +14,7 @@ import java.util.stream.Collectors;
 /**
  * MessageDao のインメモリ実装（テスト・開発用）
  */
+@Repository
 public class InMemoryMessageDao implements MessageDao {
 
     private final Map<String, Message> messages = new ConcurrentHashMap<>();

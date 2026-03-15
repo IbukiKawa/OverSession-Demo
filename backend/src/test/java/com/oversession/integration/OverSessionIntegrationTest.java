@@ -13,9 +13,11 @@ import com.oversession.model.Message;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.http.ResponseEntity;
 
+import java.util.HashMap;
 import java.util.List;
-import java.util.Optional;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -61,8 +63,9 @@ class OverSessionIntegrationTest {
         String bobId = userController.registerUser(bob);
         assertNotNull(bobId);
 
-        // ユーザー一覧取得
-        List<User> users = userController.getUsers();
+        // ユーザー一覧取得（userIdなし → 全件）
+        ResponseEntity<?> allUsersResponse = userController.getUsers(null);
+        List<User> users = (List<User>) allUsersResponse.getBody();
         assertEquals(2, users.size());
 
         // ユーザー検索
@@ -75,9 +78,11 @@ class OverSessionIntegrationTest {
         alice.setWorkingStatus("不在");
         userController.updateUser(aliceId, alice);
 
-        Optional<User> updatedAlice = userController.getUser(aliceId);
-        assertTrue(updatedAlice.isPresent());
-        assertEquals("不在", updatedAlice.get().getWorkingStatus());
+        // 指定ユーザー取得（userIdあり → 1件）
+        ResponseEntity<?> aliceResponse = userController.getUsers(aliceId);
+        User updatedAlice = (User) aliceResponse.getBody();
+        assertNotNull(updatedAlice);
+        assertEquals("不在", updatedAlice.getWorkingStatus());
     }
 
     @Test
@@ -92,7 +97,10 @@ class OverSessionIntegrationTest {
         String bobId = userController.registerUser(bob);
 
         // チャット作成
-        String chatId = chatController.createChat(aliceId, bobId);
+        Map<String, String> createChatBody = new HashMap<>();
+        createChatBody.put("userId1", aliceId);
+        createChatBody.put("userId2", bobId);
+        String chatId = chatController.createChat(createChatBody);
         assertNotNull(chatId);
 
         // チャット一覧取得
@@ -101,29 +109,43 @@ class OverSessionIntegrationTest {
         assertEquals(chatId, aliceChats.get(0).getChatId());
 
         // メッセージ送信
-        String messageId1 = chatController.sendMessage(chatId, aliceId, "Hello Bob!");
+        Map<String, String> msg1Body = new HashMap<>();
+        msg1Body.put("senderUserId", aliceId);
+        msg1Body.put("text", "Hello Bob!");
+        String messageId1 = chatController.sendMessage(chatId, msg1Body);
         assertNotNull(messageId1);
 
-        String messageId2 = chatController.sendMessage(chatId, bobId, "Hi Alice!");
+        Map<String, String> msg2Body = new HashMap<>();
+        msg2Body.put("senderUserId", bobId);
+        msg2Body.put("text", "Hi Alice!");
+        String messageId2 = chatController.sendMessage(chatId, msg2Body);
         assertNotNull(messageId2);
 
         // メッセージ一覧取得
-        List<Message> messages = chatController.getChatMessages(chatId);
+        List<Message> messages = chatController.getChatMessages(chatId, null, 20);
         assertEquals(2, messages.size());
         assertEquals("Hello Bob!", messages.get(0).getText());
         assertEquals("Hi Alice!", messages.get(1).getText());
 
         // リアクション追加
-        chatController.addReaction(chatId, messageId1, bobId, 1); // Bob が Alice のメッセージに👍
+        Map<String, Object> reactionBody = new HashMap<>();
+        reactionBody.put("userId", bobId);
+        reactionBody.put("reactionType", 1);
+        chatController.addReaction(chatId, messageId1, reactionBody);
 
         // 既読マーク
-        chatController.markAsRead(chatId, messageId1, bobId);
-        chatController.markAsRead(chatId, messageId2, aliceId);
+        Map<String, String> readBody1 = new HashMap<>();
+        readBody1.put("readerId", bobId);
+        chatController.markAsRead(chatId, messageId1, readBody1);
+
+        Map<String, String> readBody2 = new HashMap<>();
+        readBody2.put("readerId", aliceId);
+        chatController.markAsRead(chatId, messageId2, readBody2);
 
         // メッセージ確認（リアクション・既読状態含む）
-        List<Message> updatedMessages = chatController.getChatMessages(chatId);
+        List<Message> updatedMessages = chatController.getChatMessages(chatId, null, 20);
         assertEquals(2, updatedMessages.size());
-        
+
         Message firstMessage = updatedMessages.get(0);
         assertNotNull(firstMessage.getReadAt());
         assertFalse(firstMessage.getReactions().isEmpty());
@@ -141,22 +163,28 @@ class OverSessionIntegrationTest {
         String bobId = userController.registerUser(bob);
 
         // チャット作成
-        String chatId = chatController.createChat(aliceId, bobId);
+        Map<String, String> createChatBody = new HashMap<>();
+        createChatBody.put("userId1", aliceId);
+        createChatBody.put("userId2", bobId);
+        String chatId = chatController.createChat(createChatBody);
 
         // 複数メッセージ送信
         for (int i = 1; i <= 10; i++) {
-            chatController.sendMessage(chatId, aliceId, "Message " + i);
+            Map<String, String> msgBody = new HashMap<>();
+            msgBody.put("senderUserId", aliceId);
+            msgBody.put("text", "Message " + i);
+            chatController.sendMessage(chatId, msgBody);
         }
 
-        // ページネーション取得
-        List<Message> firstPage = chatController.getChatMessagesWithPagination(chatId, null, 5);
+        // ページネーション取得（cursorなし → 先頭から）
+        List<Message> firstPage = chatController.getChatMessages(chatId, null, 5);
         assertEquals(5, firstPage.size());
         assertEquals("Message 1", firstPage.get(0).getText());
         assertEquals("Message 5", firstPage.get(4).getText());
 
-        // 次ページ取得
+        // 次ページ取得（cursorあり）
         String cursor = firstPage.get(4).getMessageId();
-        List<Message> secondPage = chatController.getChatMessagesWithPagination(chatId, cursor, 5);
+        List<Message> secondPage = chatController.getChatMessages(chatId, cursor, 5);
         assertEquals(5, secondPage.size());
         assertEquals("Message 6", secondPage.get(0).getText());
         assertEquals("Message 10", secondPage.get(4).getText());

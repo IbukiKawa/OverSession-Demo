@@ -9,6 +9,7 @@
 /Users/koichi/dev/OverSession-Demo/backend/src/main/java/com/oversession/model/User.java
 /Users/koichi/dev/OverSession-Demo/backend/src/main/java/com/oversession/dao/impl/InMemoryMessageDao.java
 /Users/koichi/dev/OverSession-Demo/backend/src/main/java/com/oversession/model/Message.java
+/Users/koichi/dev/OverSession-Demo/backend/src/main/java/com/oversession/OverSessionApplication.java
 /Users/koichi/dev/OverSession-Demo/backend/src/main/java/com/oversession/service/UserService.java
 /Users/koichi/dev/OverSession-Demo/backend/src/main/java/com/oversession/dao/impl/InMemoryChatDao.java
 /Users/koichi/dev/OverSession-Demo/backend/src/main/java/com/oversession/dao/impl/InMemoryReactionDao.java

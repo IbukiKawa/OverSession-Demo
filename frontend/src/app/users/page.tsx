@@ -1,6 +1,16 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import AppBar from '@mui/material/AppBar';
+import Toolbar from '@mui/material/Toolbar';
+import Typography from '@mui/material/Typography';
+import Button from '@mui/material/Button';
+import Box from '@mui/material/Box';
+import Container from '@mui/material/Container';
+import CircularProgress from '@mui/material/CircularProgress';
+import Alert from '@mui/material/Alert';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import AddIcon from '@mui/icons-material/Add';
 import type { User } from '@/api/types';
 import { getUsers } from '@/api';
 import UserSearchBar from '@/component/user/UserSearchBar';
@@ -37,41 +47,43 @@ export default function UsersPage() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto min-h-screen px-4 py-6">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <a href="/chats" className="text-blue-500 hover:underline text-sm">
-            ← チャット
-          </a>
-          <h1 className="text-xl font-semibold">ユーザ管理</h1>
-        </div>
-        <button
-          onClick={() => setEditTarget('new')}
-          className="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors"
-        >
-          + 新規登録
-        </button>
-      </div>
+    <Box sx={{ minHeight: '100vh' }}>
+      <AppBar position="sticky" color="inherit" elevation={1}>
+        <Toolbar>
+          <Button href="/chats" startIcon={<ArrowBackIcon />} size="small" sx={{ mr: 2 }}>
+            チャット
+          </Button>
+          <Typography variant="h6" fontWeight="bold" sx={{ flex: 1 }}>
+            ユーザ管理
+          </Typography>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            size="small"
+            onClick={() => setEditTarget('new')}
+          >
+            新規登録
+          </Button>
+        </Toolbar>
+      </AppBar>
 
-      <UserSearchBar onSearch={fetchUsers} loading={loading} />
+      <Container maxWidth="lg" sx={{ py: 3 }}>
+        <UserSearchBar onSearch={fetchUsers} loading={loading} />
 
-      {error && (
-        <div className="mb-4 bg-red-50 border border-red-200 rounded p-3 text-sm text-red-700">
-          {error}
-        </div>
-      )}
+        {error && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {error}
+          </Alert>
+        )}
 
-      {loading ? (
-        <div className="flex justify-center py-12">
-          <div className="w-8 h-8 border-4 border-gray-200 border-t-blue-500 rounded-full animate-spin" />
-        </div>
-      ) : (
-        <UserTable
-          users={users}
-          onEdit={(user) => setEditTarget(user)}
-        />
-      )}
+        {loading ? (
+          <Box display="flex" justifyContent="center" py={6}>
+            <CircularProgress />
+          </Box>
+        ) : (
+          <UserTable users={users} onEdit={(user) => setEditTarget(user)} />
+        )}
+      </Container>
 
       {editTarget !== null && (
         <UserForm
@@ -80,6 +92,6 @@ export default function UsersPage() {
           onCancel={() => setEditTarget(null)}
         />
       )}
-    </div>
+    </Box>
   );
 }

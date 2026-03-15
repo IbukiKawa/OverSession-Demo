@@ -1,6 +1,10 @@
 'use client';
 
 import { useRef, useEffect, useCallback } from 'react';
+import Box from '@mui/material/Box';
+import Chip from '@mui/material/Chip';
+import CircularProgress from '@mui/material/CircularProgress';
+import Typography from '@mui/material/Typography';
 import type { Message, ReactionType } from '@/api/types';
 import MessageBubble from './MessageBubble';
 
@@ -74,18 +78,31 @@ export default function MessageList({
   }, [handleScroll]);
 
   return (
-    <div
+    <Box
       ref={listRef}
-      className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-3"
+      sx={{
+        flex: 1,
+        overflowY: 'auto',
+        px: 2,
+        py: 2,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 1.5,
+      }}
     >
       {loadingMore && (
-        <div className="text-center text-xs text-gray-400 py-2">
-          <span className="inline-block w-4 h-4 border-2 border-gray-300 border-t-blue-500 rounded-full animate-spin mr-1 align-middle" />
-          読み込み中...
-        </div>
+        <Box display="flex" justifyContent="center" alignItems="center" gap={1} py={1}>
+          <CircularProgress size={14} />
+          <Typography variant="caption" color="text.secondary">
+            読み込み中...
+          </Typography>
+        </Box>
       )}
+
       {!hasMore && messages.length > 0 && (
-        <div className="text-center text-xs text-gray-300 py-1">最初のメッセージ</div>
+        <Typography variant="caption" color="text.disabled" textAlign="center" py={0.5}>
+          最初のメッセージ
+        </Typography>
       )}
 
       {messages.map((msg, idx) => {
@@ -93,13 +110,15 @@ export default function MessageList({
         const showDateHeader = !prevMsg || !isSameDay(msg.sentAt, prevMsg.sentAt);
 
         return (
-          <div key={msg.messageId}>
+          <Box key={msg.messageId}>
             {showDateHeader && (
-              <div className="flex justify-center my-2">
-                <span className="bg-gray-200 text-gray-600 text-xs px-3 py-1 rounded-full">
-                  {formatDateHeader(msg.sentAt)}
-                </span>
-              </div>
+              <Box display="flex" justifyContent="center" my={1}>
+                <Chip
+                  label={formatDateHeader(msg.sentAt)}
+                  size="small"
+                  sx={{ bgcolor: 'grey.200', color: 'text.secondary', fontSize: '0.72rem' }}
+                />
+              </Box>
             )}
             <MessageBubble
               message={msg}
@@ -109,11 +128,11 @@ export default function MessageList({
               partnerName={partnerName}
               partnerImageUrl={partnerImageUrl}
             />
-          </div>
+          </Box>
         );
       })}
 
       <div ref={bottomRef} />
-    </div>
+    </Box>
   );
 }

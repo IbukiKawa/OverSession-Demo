@@ -1,11 +1,28 @@
 'use client';
 
 import { useState } from 'react';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
+import TextField from '@mui/material/TextField';
+import Select from '@mui/material/Select';
+import MenuItem from '@mui/material/MenuItem';
+import FormControl from '@mui/material/FormControl';
+import InputLabel from '@mui/material/InputLabel';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import Checkbox from '@mui/material/Checkbox';
+import Button from '@mui/material/Button';
+import IconButton from '@mui/material/IconButton';
+import Alert from '@mui/material/Alert';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
+import CloseIcon from '@mui/icons-material/Close';
 import type { User, RegisterUserRequest, UpdateUserRequest, ApiError } from '@/api/types';
 import { registerUser, updateUser } from '@/api';
 
 interface UserFormProps {
-  user?: User; // undefined = new user mode
+  user?: User;
   onSuccess: () => void;
   onCancel: () => void;
 }
@@ -117,130 +134,167 @@ export default function UserForm({ user, onSuccess, onCancel }: UserFormProps) {
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-        <div className="px-6 py-4 border-b flex items-center justify-between">
-          <h2 className="text-lg font-semibold">{isEdit ? 'ユーザ編集' : '新規ユーザ登録'}</h2>
-          <button onClick={onCancel} className="text-gray-400 hover:text-gray-600 text-xl">✕</button>
-        </div>
-        <form onSubmit={handleSubmit} className="px-6 py-4 space-y-4">
-          {/* Validation errors */}
+    <Dialog open onClose={onCancel} maxWidth="sm" fullWidth>
+      <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        {isEdit ? 'ユーザ編集' : '新規ユーザ登録'}
+        <IconButton onClick={onCancel} size="small">
+          <CloseIcon />
+        </IconButton>
+      </DialogTitle>
+
+      <DialogContent dividers>
+        <Box component="form" id="user-form" onSubmit={handleSubmit} display="flex" flexDirection="column" gap={2} pt={0.5}>
           {clientErrors.length > 0 && (
-            <div className="bg-red-50 border border-red-200 rounded p-3 text-sm text-red-700">
-              <ul className="list-disc list-inside space-y-1">
+            <Alert severity="error">
+              <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
                 {clientErrors.map((e, i) => <li key={i}>{e}</li>)}
               </ul>
-            </div>
+            </Alert>
           )}
           {apiError && (
-            <div className="bg-red-50 border border-red-200 rounded p-3 text-sm text-red-700">
-              <p className="font-medium">{apiError.reason}</p>
+            <Alert severity="error">
+              <Typography variant="body2" fontWeight="bold">{apiError.reason}</Typography>
               {apiError.errors.map((e, i) => (
-                <p key={i}>{e.msg}</p>
+                <Typography key={i} variant="body2">{e.msg}</Typography>
               ))}
-            </div>
+            </Alert>
           )}
 
-          <Field label="ユーザ名 *">
-            <input
-              type="text"
-              value={form.userName}
-              onChange={(e) => set('userName', e.target.value)}
-              className="input"
-              required
-            />
-          </Field>
+          <TextField
+            label="ユーザ名 *"
+            size="small"
+            fullWidth
+            value={form.userName}
+            onChange={(e) => set('userName', e.target.value)}
+            required
+          />
 
-          <Field label="出社ステータス *">
-            <select
+          <FormControl size="small" fullWidth required>
+            <InputLabel>出社ステータス *</InputLabel>
+            <Select
+              label="出社ステータス *"
               value={form.workingStatus}
               onChange={(e) => set('workingStatus', e.target.value)}
-              className="input"
-              required
             >
-              <option value="出社">出社</option>
-              <option value="不在">不在</option>
-            </select>
-          </Field>
+              <MenuItem value="出社">出社</MenuItem>
+              <MenuItem value="不在">不在</MenuItem>
+            </Select>
+          </FormControl>
 
-          <Field label="本部名1">
-            <input type="text" value={form.primaryHeadOfficeName} onChange={(e) => set('primaryHeadOfficeName', e.target.value)} className="input" />
-          </Field>
-          <Field label="本部名2">
-            <input type="text" value={form.secondaryHeadOfficeName} onChange={(e) => set('secondaryHeadOfficeName', e.target.value)} className="input" />
-          </Field>
-          <Field label="部署名">
-            <input type="text" value={form.departmentName} onChange={(e) => set('departmentName', e.target.value)} className="input" />
-          </Field>
-          <div className="grid grid-cols-2 gap-4">
-            <Field label="オフィスID">
-              <input type="number" value={form.officeId} onChange={(e) => set('officeId', e.target.value)} className="input" min={0} />
-            </Field>
-            <Field label="所属階">
-              <input type="number" value={form.floor} onChange={(e) => set('floor', e.target.value)} className="input" min={0} />
-            </Field>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <Field label="性別">
-              <select value={form.gender} onChange={(e) => set('gender', e.target.value)} className="input">
-                <option value="">未選択</option>
-                <option value="男性">男性</option>
-                <option value="女性">女性</option>
-                <option value="その他">その他</option>
-              </select>
-            </Field>
-            <Field label="在籍年数">
-              <input type="number" value={form.affiliationYear} onChange={(e) => set('affiliationYear', e.target.value)} className="input" min={0} />
-            </Field>
-          </div>
-          <Field label="マッチングユーザID">
-            <input type="text" value={form.matchingUserId} onChange={(e) => set('matchingUserId', e.target.value)} className="input" />
-          </Field>
-          <Field label="プロフィール画像URL">
-            <input type="text" value={form.userImageUrl} onChange={(e) => set('userImageUrl', e.target.value)} className="input" placeholder="https://..." />
-          </Field>
+          <TextField
+            label="本部名1"
+            size="small"
+            fullWidth
+            value={form.primaryHeadOfficeName}
+            onChange={(e) => set('primaryHeadOfficeName', e.target.value)}
+          />
+          <TextField
+            label="本部名2"
+            size="small"
+            fullWidth
+            value={form.secondaryHeadOfficeName}
+            onChange={(e) => set('secondaryHeadOfficeName', e.target.value)}
+          />
+          <TextField
+            label="部署名"
+            size="small"
+            fullWidth
+            value={form.departmentName}
+            onChange={(e) => set('departmentName', e.target.value)}
+          />
+
+          <Box display="grid" gridTemplateColumns="1fr 1fr" gap={2}>
+            <TextField
+              label="オフィスID"
+              size="small"
+              type="number"
+              value={form.officeId}
+              onChange={(e) => set('officeId', e.target.value)}
+              inputProps={{ min: 0 }}
+            />
+            <TextField
+              label="所属階"
+              size="small"
+              type="number"
+              value={form.floor}
+              onChange={(e) => set('floor', e.target.value)}
+              inputProps={{ min: 0 }}
+            />
+          </Box>
+
+          <Box display="grid" gridTemplateColumns="1fr 1fr" gap={2}>
+            <FormControl size="small" fullWidth>
+              <InputLabel>性別</InputLabel>
+              <Select
+                label="性別"
+                value={form.gender}
+                onChange={(e) => set('gender', e.target.value)}
+              >
+                <MenuItem value="">未選択</MenuItem>
+                <MenuItem value="男性">男性</MenuItem>
+                <MenuItem value="女性">女性</MenuItem>
+                <MenuItem value="その他">その他</MenuItem>
+              </Select>
+            </FormControl>
+            <TextField
+              label="在籍年数"
+              size="small"
+              type="number"
+              value={form.affiliationYear}
+              onChange={(e) => set('affiliationYear', e.target.value)}
+              inputProps={{ min: 0 }}
+            />
+          </Box>
+
+          <TextField
+            label="マッチングユーザID"
+            size="small"
+            fullWidth
+            value={form.matchingUserId}
+            onChange={(e) => set('matchingUserId', e.target.value)}
+          />
+          <TextField
+            label="プロフィール画像URL"
+            size="small"
+            fullWidth
+            placeholder="https://..."
+            value={form.userImageUrl}
+            onChange={(e) => set('userImageUrl', e.target.value)}
+          />
 
           {isEdit && (
-            <Field label="">
-              <label className="flex items-center gap-2 text-sm cursor-pointer">
-                <input
-                  type="checkbox"
+            <FormControlLabel
+              control={
+                <Checkbox
                   checked={form.deleted}
                   onChange={(e) => set('deleted', e.target.checked)}
-                  className="w-4 h-4"
+                  color="error"
                 />
-                <span className="text-red-600">削除済みにする</span>
-              </label>
-            </Field>
+              }
+              label={
+                <Typography variant="body2" color="error">
+                  削除済みにする
+                </Typography>
+              }
+            />
           )}
+        </Box>
+      </DialogContent>
 
-          <div className="flex gap-3 pt-2">
-            <button
-              type="button"
-              onClick={onCancel}
-              className="flex-1 py-2 border border-gray-300 rounded-lg text-sm text-gray-600 hover:bg-gray-50"
-            >
-              キャンセル
-            </button>
-            <button
-              type="submit"
-              disabled={submitting}
-              className="flex-1 py-2 bg-blue-500 text-white rounded-lg text-sm font-medium disabled:opacity-50 hover:bg-blue-600"
-            >
-              {submitting ? '送信中…' : isEdit ? '更新' : '登録'}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-}
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div>
-      {label && <label className="block text-sm text-gray-600 mb-1">{label}</label>}
-      {children}
-    </div>
+      <DialogActions sx={{ px: 3, py: 2, gap: 1 }}>
+        <Button variant="outlined" onClick={onCancel} fullWidth>
+          キャンセル
+        </Button>
+        <Button
+          type="submit"
+          form="user-form"
+          variant="contained"
+          disabled={submitting}
+          fullWidth
+        >
+          {submitting ? '送信中…' : isEdit ? '更新' : '登録'}
+        </Button>
+      </DialogActions>
+    </Dialog>
   );
 }

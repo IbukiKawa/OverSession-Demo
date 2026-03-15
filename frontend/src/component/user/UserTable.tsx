@@ -1,4 +1,15 @@
+import Table from '@mui/material/Table';
+import TableHead from '@mui/material/TableHead';
+import TableBody from '@mui/material/TableBody';
+import TableRow from '@mui/material/TableRow';
+import TableCell from '@mui/material/TableCell';
+import TableContainer from '@mui/material/TableContainer';
+import Paper from '@mui/material/Paper';
+import Button from '@mui/material/Button';
+import Typography from '@mui/material/Typography';
+import Chip from '@mui/material/Chip';
 import type { User } from '@/api/types';
+import { getPictureUrl } from '@/api';
 import Avatar from '@/component/chat/Avatar';
 
 interface UserTableProps {
@@ -6,59 +17,68 @@ interface UserTableProps {
   onEdit: (user: User) => void;
 }
 
-const WORKING_STATUS_LABEL: Record<string, string> = {
-  出社: '🟢 出社',
-  不在: '⚫ 不在',
+const STATUS_COLOR: Record<string, 'success' | 'default'> = {
+  出社: 'success',
+  不在: 'default',
 };
 
 export default function UserTable({ users, onEdit }: UserTableProps) {
   if (users.length === 0) {
-    return <p className="text-gray-400 text-sm py-4 text-center">ユーザが見つかりません</p>;
+    return (
+      <Typography color="text.secondary" variant="body2" textAlign="center" py={4}>
+        ユーザが見つかりません
+      </Typography>
+    );
   }
 
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-sm border-collapse">
-        <thead>
-          <tr className="bg-gray-50 text-left text-gray-600">
-            <th className="px-3 py-2 border-b font-medium">アイコン</th>
-            <th className="px-3 py-2 border-b font-medium">ユーザID</th>
-            <th className="px-3 py-2 border-b font-medium">ユーザ名</th>
-            <th className="px-3 py-2 border-b font-medium">本部名1</th>
-            <th className="px-3 py-2 border-b font-medium">部署名</th>
-            <th className="px-3 py-2 border-b font-medium">出社ステータス</th>
-            <th className="px-3 py-2 border-b font-medium">操作</th>
-          </tr>
-        </thead>
-        <tbody>
+    <TableContainer component={Paper} variant="outlined">
+      <Table size="small">
+        <TableHead>
+          <TableRow sx={{ bgcolor: 'grey.50' }}>
+            <TableCell>アイコン</TableCell>
+            <TableCell>ユーザID</TableCell>
+            <TableCell>ユーザ名</TableCell>
+            <TableCell>本部名1</TableCell>
+            <TableCell>部署名</TableCell>
+            <TableCell>出社ステータス</TableCell>
+            <TableCell>操作</TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
           {users.map((user) => (
-            <tr key={user.userId} className="hover:bg-gray-50 border-b last:border-b-0">
-              <td className="px-3 py-2">
-                <Avatar
-                  name={user.userName}
-                  imageUrl={user.pictureName}
-                  size="sm"
+            <TableRow key={user.userId} hover>
+              <TableCell>
+                <Avatar name={user.userName} imageUrl={getPictureUrl(user.pictureName)} size="sm" />
+              </TableCell>
+              <TableCell>
+                <Typography variant="caption" fontFamily="monospace" color="text.secondary">
+                  {user.userId}
+                </Typography>
+              </TableCell>
+              <TableCell>{user.userName}</TableCell>
+              <TableCell sx={{ color: 'text.secondary' }}>
+                {user.primaryHeadOfficeName ?? '—'}
+              </TableCell>
+              <TableCell sx={{ color: 'text.secondary' }}>
+                {user.departmentName ?? '—'}
+              </TableCell>
+              <TableCell>
+                <Chip
+                  label={user.workingStatus}
+                  size="small"
+                  color={STATUS_COLOR[user.workingStatus] ?? 'default'}
                 />
-              </td>
-              <td className="px-3 py-2 font-mono text-xs text-gray-500">{user.userId}</td>
-              <td className="px-3 py-2">{user.userName}</td>
-              <td className="px-3 py-2 text-gray-500">{user.primaryHeadOfficeName ?? '—'}</td>
-              <td className="px-3 py-2 text-gray-500">{user.departmentName ?? '—'}</td>
-              <td className="px-3 py-2">
-                {WORKING_STATUS_LABEL[user.workingStatus] ?? user.workingStatus}
-              </td>
-              <td className="px-3 py-2">
-                <button
-                  onClick={() => onEdit(user)}
-                  className="text-blue-500 hover:text-blue-700 text-xs font-medium"
-                >
+              </TableCell>
+              <TableCell>
+                <Button size="small" onClick={() => onEdit(user)}>
                   編集
-                </button>
-              </td>
-            </tr>
+                </Button>
+              </TableCell>
+            </TableRow>
           ))}
-        </tbody>
-      </table>
-    </div>
+        </TableBody>
+      </Table>
+    </TableContainer>
   );
 }

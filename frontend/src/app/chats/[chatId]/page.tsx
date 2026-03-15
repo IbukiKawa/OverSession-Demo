@@ -2,6 +2,16 @@
 
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams } from 'next/navigation';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
+import Button from '@mui/material/Button';
+import IconButton from '@mui/material/IconButton';
+import Typography from '@mui/material/Typography';
+import Box from '@mui/material/Box';
+import Stack from '@mui/material/Stack';
+import CloseIcon from '@mui/icons-material/Close';
 import type { Message, ReactionType, User } from '@/api/types';
 import {
   getChatMessages,
@@ -10,6 +20,7 @@ import {
   markMessagesRead,
   getChats,
   getUsers,
+  getPictureUrl,
   CURRENT_USER_ID,
 } from '@/api';
 import ChatHeader from '@/component/chat/ChatHeader';
@@ -19,49 +30,50 @@ import LoadingOverlay from '@/component/chat/LoadingOverlay';
 import ErrorBanner from '@/component/chat/ErrorBanner';
 import Avatar from '@/component/chat/Avatar';
 
-// プロフィールモーダル
-function ProfileModal({ user, onClose }: { user: User; onClose: () => void }) {
+// プロフィール行コンポーネント
+function ProfileRow({ label, value }: { label: string; value?: string }) {
+  if (!value) return null;
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-sm p-6">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-semibold">プロフィール</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">✕</button>
-        </div>
-        {/* アバター */}
-        <div className="flex justify-center mb-4">
-          <Avatar name={user.userName} imageUrl={user.pictureName} size="lg" />
-        </div>
-        <dl className="space-y-2 text-sm">
-          <Row label="ユーザID" value={user.userId} />
-          <Row label="ユーザ名" value={user.userName} />
-          <Row label="本部名1" value={user.primaryHeadOfficeName} />
-          <Row label="部署名" value={user.departmentName} />
-          <Row label="性別" value={user.gender} />
-          <Row
-            label="在籍年数"
-            value={user.affiliationYear != null ? `${user.affiliationYear}年` : undefined}
-          />
-          <Row label="出社ステータス" value={user.workingStatus} />
-        </dl>
-        <button
-          onClick={onClose}
-          className="mt-5 w-full py-2 bg-blue-500 text-white rounded-lg text-sm font-medium hover:bg-blue-600"
-        >
-          閉じる
-        </button>
-      </div>
-    </div>
+    <Box display="flex" gap={1} py={0.5}>
+      <Typography variant="body2" color="text.secondary" sx={{ width: 100, flexShrink: 0 }}>
+        {label}
+      </Typography>
+      <Typography variant="body2">{value}</Typography>
+    </Box>
   );
 }
 
-function Row({ label, value }: { label: string; value?: string }) {
-  if (!value) return null;
+// プロフィールモーダル
+function ProfileModal({ user, onClose }: { user: User; onClose: () => void }) {
   return (
-    <div className="flex gap-2">
-      <dt className="text-gray-500 w-28 flex-shrink-0">{label}</dt>
-      <dd className="text-gray-800">{value}</dd>
-    </div>
+    <Dialog open onClose={onClose} maxWidth="xs" fullWidth>
+      <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        プロフィール
+        <IconButton onClick={onClose} size="small">
+          <CloseIcon />
+        </IconButton>
+      </DialogTitle>
+      <DialogContent>
+        <Stack alignItems="center" mb={2}>
+          <Avatar name={user.userName} imageUrl={getPictureUrl(user.pictureName)} size="lg" />
+        </Stack>
+        <ProfileRow label="ユーザID" value={user.userId} />
+        <ProfileRow label="ユーザ名" value={user.userName} />
+        <ProfileRow label="本部名1" value={user.primaryHeadOfficeName} />
+        <ProfileRow label="部署名" value={user.departmentName} />
+        <ProfileRow label="性別" value={user.gender} />
+        <ProfileRow
+          label="在籍年数"
+          value={user.affiliationYear != null ? `${user.affiliationYear}年` : undefined}
+        />
+        <ProfileRow label="出社ステータス" value={user.workingStatus} />
+      </DialogContent>
+      <DialogActions sx={{ px: 3, pb: 2 }}>
+        <Button variant="contained" onClick={onClose} fullWidth>
+          閉じる
+        </Button>
+      </DialogActions>
+    </Dialog>
   );
 }
 
@@ -88,7 +100,7 @@ export default function ChatPage() {
       if (chat) {
         setPartnerName(chat.partnerUserName);
         setPartnerUserId(chat.partnerUserId);
-        setPartnerImageUrl(chat.partnerPictureName);
+        setPartnerImageUrl(getPictureUrl(chat.partnerPictureName));
       }
     });
   }, [chatId]);
@@ -104,7 +116,6 @@ export default function ChatPage() {
         setMessages(res.messages);
         setNextCursor(res.nextCursor ?? null);
         setScrollTrigger(1);
-        // 相手メッセージを既読に
         markMessagesRead(chatId, CURRENT_USER_ID).catch(() => {});
       })
       .catch((e) => {
@@ -157,7 +168,6 @@ export default function ChatPage() {
       setError(null);
       try {
         await sendReaction({ chatId, messageId, type, reactorUserId: CURRENT_USER_ID });
-        // 楽観的更新
         setMessages((prev) =>
           prev.map((m) => {
             if (m.messageId !== messageId) return m;
@@ -199,7 +209,7 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="flex flex-col h-screen max-w-2xl mx-auto">
+    <Box display="flex" flexDirection="column" sx={{ height: '100vh', maxWidth: 600, mx: 'auto' }}>
       {loading && <LoadingOverlay />}
 
       <ChatHeader partnerName={partnerName || 'チャット'} />
@@ -224,6 +234,6 @@ export default function ChatPage() {
       {profileUser && (
         <ProfileModal user={profileUser} onClose={() => setProfileUser(null)} />
       )}
-    </div>
+    </Box>
   );
 }

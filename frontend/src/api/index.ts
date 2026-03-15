@@ -40,8 +40,10 @@ import {
 
 const USE_MOCK = process.env.NEXT_PUBLIC_DATA_SOURCE !== 'api';
 
-/** The current logged-in user ID (mock: fixed, real API: set this at login) */
-export const CURRENT_USER_ID: string = USE_MOCK ? MOCK_CURRENT_USER_ID : '';
+/** The current logged-in user ID (mock: fixed, real API: from NEXT_PUBLIC_CURRENT_USER_ID) */
+export const CURRENT_USER_ID: string = USE_MOCK
+  ? MOCK_CURRENT_USER_ID
+  : (process.env.NEXT_PUBLIC_CURRENT_USER_ID ?? '');
 
 // -------------------- User --------------------
 export function getUsers(userId?: string): Promise<User[]> {
@@ -87,4 +89,20 @@ export function markMessagesRead(chatId: string, userId: string): Promise<void> 
   return USE_MOCK
     ? mockMarkMessagesRead(chatId, userId)
     : clientMarkMessagesRead(chatId, userId);
+}
+
+// -------------------- Image URL --------------------
+/**
+ * pictureName から表示用画像URLを構築する。
+ * - モック: pictureName はフルURL → そのまま返す
+ * - 実API: pictureName は S3オブジェクトキー → CloudFront URL を付加する
+ */
+export function getPictureUrl(pictureName?: string | null): string | undefined {
+  if (!pictureName) return undefined;
+  if (pictureName.startsWith('http://') || pictureName.startsWith('https://')) {
+    return pictureName;
+  }
+  const cfUrl = process.env.NEXT_PUBLIC_CLOUDFRONT_URL ?? '';
+  if (!cfUrl) return undefined;
+  return `${cfUrl.replace(/\/$/, '')}/${pictureName}`;
 }

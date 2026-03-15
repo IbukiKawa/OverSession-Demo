@@ -2,8 +2,22 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Container from '@mui/material/Container';
+import AppBar from '@mui/material/AppBar';
+import Toolbar from '@mui/material/Toolbar';
+import Typography from '@mui/material/Typography';
+import Button from '@mui/material/Button';
+import List from '@mui/material/List';
+import ListItemButton from '@mui/material/ListItemButton';
+import ListItemAvatar from '@mui/material/ListItemAvatar';
+import ListItemText from '@mui/material/ListItemText';
+import Badge from '@mui/material/Badge';
+import CircularProgress from '@mui/material/CircularProgress';
+import Alert from '@mui/material/Alert';
+import Box from '@mui/material/Box';
+import Divider from '@mui/material/Divider';
 import type { ChatSummary } from '@/api/types';
-import { getChats, CURRENT_USER_ID } from '@/api';
+import { getChats, getPictureUrl, CURRENT_USER_ID } from '@/api';
 import Avatar from '@/component/chat/Avatar';
 
 function formatLastMessageAt(isoString: string): string {
@@ -32,64 +46,80 @@ export default function ChatsPage() {
   }, []);
 
   return (
-    <div className="max-w-2xl mx-auto min-h-screen">
-      {/* Header */}
-      <div className="sticky top-0 bg-white border-b px-4 py-3 flex items-center justify-between">
-        <h1 className="text-lg font-semibold">チャット</h1>
-        <a href="/users" className="text-sm text-blue-500 hover:underline">
-          ユーザ管理
-        </a>
-      </div>
+    <Box sx={{ maxWidth: 600, mx: 'auto', minHeight: '100vh' }}>
+      <AppBar position="sticky" color="inherit" elevation={1}>
+        <Toolbar>
+          <Typography variant="h6" fontWeight="bold" sx={{ flex: 1 }}>
+            チャット
+          </Typography>
+          <Button href="/users" size="small">
+            ユーザ管理
+          </Button>
+        </Toolbar>
+      </AppBar>
 
       {loading && (
-        <div className="flex justify-center items-center py-16">
-          <div className="w-8 h-8 border-4 border-gray-200 border-t-blue-500 rounded-full animate-spin" />
-        </div>
+        <Box display="flex" justifyContent="center" py={8}>
+          <CircularProgress />
+        </Box>
       )}
 
       {error && (
-        <div className="mx-4 mt-4 bg-red-50 border border-red-200 rounded p-3 text-sm text-red-700">
+        <Alert severity="error" sx={{ mx: 2, mt: 2 }}>
           {error}
-        </div>
+        </Alert>
       )}
 
       {!loading && !error && chats.length === 0 && (
-        <p className="text-center text-gray-400 py-16">チャットがありません</p>
+        <Typography color="text.secondary" textAlign="center" py={8}>
+          チャットがありません
+        </Typography>
       )}
 
-      <ul>
-        {chats.map((chat) => (
-          <li
-            key={chat.chatId}
-            onClick={() => router.push(`/chats/${chat.chatId}`)}
-            className="flex items-center gap-3 px-4 py-4 border-b hover:bg-gray-50 cursor-pointer transition-colors"
-          >
-            <Avatar name={chat.partnerUserName} imageUrl={chat.partnerPictureName} size="md" />
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center justify-between">
-                <span className="font-semibold text-gray-800 truncate">
-                  {chat.partnerUserName}
-                </span>
-                {chat.lastMessageAt && (
-                  <span className="text-xs text-gray-400 ml-2 flex-shrink-0">
-                    {formatLastMessageAt(chat.lastMessageAt)}
-                  </span>
-                )}
-              </div>
-              <div className="flex items-center justify-between mt-0.5">
-                <span className="text-sm text-gray-500 truncate">
-                  {chat.lastMessage ?? ''}
-                </span>
-                {chat.unreadCount && chat.unreadCount > 0 ? (
-                  <span className="ml-2 bg-red-500 text-white text-xs font-medium rounded-full px-2 py-0.5 flex-shrink-0">
-                    {chat.unreadCount}
-                  </span>
-                ) : null}
-              </div>
-            </div>
-          </li>
+      <List disablePadding>
+        {chats.map((chat, idx) => (
+          <Box key={chat.chatId}>
+            <ListItemButton
+              onClick={() => router.push(`/chats/${chat.chatId}`)}
+              sx={{ px: 2, py: 1.5 }}
+            >
+              <ListItemAvatar>
+                <Avatar name={chat.partnerUserName} imageUrl={getPictureUrl(chat.partnerPictureName)} size="md" />
+              </ListItemAvatar>
+              <ListItemText
+                primary={
+                  <Box display="flex" justifyContent="space-between" alignItems="center">
+                    <Typography variant="subtitle2" fontWeight="bold" noWrap sx={{ flex: 1 }}>
+                      {chat.partnerUserName}
+                    </Typography>
+                    {chat.lastMessageAt && (
+                      <Typography variant="caption" color="text.secondary" sx={{ ml: 1, flexShrink: 0 }}>
+                        {formatLastMessageAt(chat.lastMessageAt)}
+                      </Typography>
+                    )}
+                  </Box>
+                }
+                secondary={
+                  <Box display="flex" justifyContent="space-between" alignItems="center" mt={0.25}>
+                    <Typography variant="body2" color="text.secondary" noWrap sx={{ flex: 1 }}>
+                      {chat.lastMessage ?? ''}
+                    </Typography>
+                    {chat.unreadCount && chat.unreadCount > 0 ? (
+                      <Badge
+                        badgeContent={chat.unreadCount}
+                        color="error"
+                        sx={{ ml: 1, flexShrink: 0 }}
+                      />
+                    ) : null}
+                  </Box>
+                }
+                disableTypography
+              />
+            </ListItemButton>
+            {idx < chats.length - 1 && <Divider component="li" />}
+          </Box>
         ))}
-      </ul>
-    </div>
+      </List>
+    </Box>
   );
 }

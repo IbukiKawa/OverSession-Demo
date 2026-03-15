@@ -1888,3 +1888,126 @@ Excel側の「チャット一覧API設計書」はテンプレ状態で、確定
 
 \- ユーザ登録・更新フォームの `userImageUrl` フィールドで画像URLを入力・保存できるようにする。
 
+
+
+\# UIリファクタリング要件（2026-02-28 追記）
+
+あなたは Claude Code です（リポジトリを読み書き・コマンド実行できる前提）。
+
+## 目的
+
+既存実装は `<div className="...">` 等、素の HTML 要素と Tailwind CSS クラス文字列で構成されている。
+これを **React らしいコンポーネント指向** の実装に書き換える。
+
+## UIライブラリ方針
+
+- **メインライブラリ: MUI (Material UI) v6** を採用し、できる限り MUI で実装する。
+- MUI で実現できない機能や演出は、他のパッケージを導入して補完してよい。
+- Tailwind CSS は廃止し、スタイリングは MUI の `sx` prop を使用する。
+
+## インストール手順
+
+`frontend/src/` ディレクトリで以下を実行する（React 19 との peer 依存解決のため `--legacy-peer-deps` を使用）：
+
+```bash
+npm install @mui/material @mui/icons-material @emotion/react @emotion/styled --legacy-peer-deps
+```
+
+## 実装ガイドライン
+
+### レイアウト
+- `<div className="flex ...">` → `<Box display="flex" ...>` または `<Stack>`
+- `<div className="grid ...">` → `<Box display="grid" ...>`
+- ページ全体の幅制限 → `<Container maxWidth="sm|md|lg">`
+
+### テキスト
+- `<h1>`, `<h2>`, `<p>`, `<span>` → `<Typography variant="h6|subtitle1|body2|caption" ...>`
+
+### ボタン
+- `<button className="px-4 py-2 bg-blue-500 ...">` → `<Button variant="contained">`
+- アイコンボタン → `<IconButton>`
+
+### フォーム
+- `<input type="text">` → `<TextField size="small">`
+- `<textarea>` → `<TextField multiline maxRows={4}>`
+- `<select>` → `<Select>` + `<FormControl>` + `<InputLabel>` + `<MenuItem>`
+- `<input type="checkbox">` → `<Checkbox>` + `<FormControlLabel>`
+
+### ヘッダー
+- sticky な `<div>` ヘッダー → `<AppBar position="sticky">` + `<Toolbar>`
+
+### リスト（チャット一覧）
+- `<ul>/<li>` → `<List>` + `<ListItemButton>` + `<ListItemAvatar>` + `<ListItemText>`
+- 未読バッジ → `<Badge badgeContent={count} color="error">`
+
+### テーブル（ユーザ一覧）
+- `<table>/<tr>/<td>` → `<TableContainer>` + `<Table>` + `<TableHead>` + `<TableBody>` + `<TableRow>` + `<TableCell>`
+- ステータス表示 → `<Chip color="success|default">`
+
+### モーダル
+- `<div className="fixed inset-0 ...">` → `<Dialog open maxWidth="sm" fullWidth>`
+  + `<DialogTitle>` + `<DialogContent>` + `<DialogActions>`
+
+### ローディング
+- アニメーションスピナー div → `<Backdrop>` + `<CircularProgress>` + `<Typography>`
+
+### エラー表示
+- エラー赤枠 div → `<Alert severity="error" onClose={...}>`
+
+### アバター
+- 独自実装の円形アバター → `<Avatar>` (MUI) を `src` prop と fallback (bgcolor + 頭文字) で実装
+
+## テーマ設定
+
+`app/ThemeRegistry.tsx` を Client Component として作成し、`app/layout.tsx` でラップする：
+
+```tsx
+'use client';
+import { ThemeProvider, createTheme } from '@mui/material/styles';
+import CssBaseline from '@mui/material/CssBaseline';
+
+const theme = createTheme({
+  palette: { primary: { main: '#3b82f6' } },
+  typography: { fontFamily: 'Arial, Helvetica, sans-serif' },
+  components: { MuiButton: { defaultProps: { disableElevation: true } } },
+});
+
+export default function ThemeRegistry({ children }) {
+  return (
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      {children}
+    </ThemeProvider>
+  );
+}
+```
+
+## 変更対象ファイル
+
+| ファイル | 主な変更 |
+|---------|---------|
+| `app/ThemeRegistry.tsx` | 新規作成（MUI テーマ） |
+| `app/layout.tsx` | ThemeRegistry でラップ |
+| `app/globals.css` | Tailwind 廃止、最小化 |
+| `app/chats/page.tsx` | List + AppBar + Badge |
+| `app/chats/[chatId]/page.tsx` | Dialog（プロフィールモーダル） |
+| `app/users/page.tsx` | Container + AppBar + Button |
+| `component/chat/Avatar.tsx` | MUI Avatar |
+| `component/chat/ChatHeader.tsx` | AppBar + Toolbar + IconButton |
+| `component/chat/MessageBubble.tsx` | Box + Paper + Chip + Typography |
+| `component/chat/MessageList.tsx` | Box + CircularProgress + Chip |
+| `component/chat/MessageComposer.tsx` | TextField + Button |
+| `component/chat/ReactionPicker.tsx` | Paper + IconButton + Tooltip |
+| `component/chat/ErrorBanner.tsx` | Alert |
+| `component/chat/LoadingOverlay.tsx` | Backdrop + CircularProgress |
+| `component/user/UserTable.tsx` | TableContainer + Table + Chip |
+| `component/user/UserSearchBar.tsx` | TextField + Button |
+| `component/user/UserForm.tsx` | Dialog + TextField + Select + Checkbox |
+
+## 注意事項
+
+- API 層（`api/`）は変更しない。
+- ビジネスロジック（useState/useEffect/コールバック）は変更しない。
+- 既存の Props インターフェースは維持する。
+- `npm run build` でビルドエラーがないことを確認する。
+

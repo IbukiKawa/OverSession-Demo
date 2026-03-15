@@ -1,6 +1,11 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import AppBar from '@mui/material/AppBar';
+import Toolbar from '@mui/material/Toolbar';
+import IconButton from '@mui/material/IconButton';
+import Typography from '@mui/material/Typography';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
 interface ChatHeaderProps {
   partnerName: string;
@@ -8,16 +13,16 @@ interface ChatHeaderProps {
 
 export default function ChatHeader({ partnerName }: ChatHeaderProps) {
   const router = useRouter();
-
   return (
-    <div className="flex items-center gap-3 px-4 py-3 border-b bg-white sticky top-0 z-10">
-      <button
-        onClick={() => router.back()}
-        className="text-blue-500 hover:text-blue-700 text-sm font-medium"
-      >
-        ← 戻る
-      </button>
-      <h1 className="font-semibold text-gray-800 truncate">{partnerName}</h1>
-    </div>
+    <AppBar position="sticky" color="inherit" elevation={1} sx={{ zIndex: 10 }}>
+      <Toolbar variant="dense">
+        <IconButton edge="start" color="primary" onClick={() => router.back()} sx={{ mr: 1 }}>
+          <ArrowBackIcon />
+        </IconButton>
+        <Typography variant="subtitle1" fontWeight="bold" noWrap>
+          {partnerName}
+        </Typography>
+      </Toolbar>
+    </AppBar>
   );
 }

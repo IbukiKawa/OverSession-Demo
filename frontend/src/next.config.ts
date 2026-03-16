@@ -1,6 +1,7 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
+  output: 'standalone',
   images: {
     // モックで使用するプレースホルダー画像ドメイン
     remotePatterns: [

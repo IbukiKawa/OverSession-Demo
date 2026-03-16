@@ -1,13 +1,15 @@
 services:
   backend:
     build:
-      context: ./backend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: docker/backend/Dockerfile
     ports:
       - "8080:8080"
     environment:
       - SPRING_PROFILES_ACTIVE=local
-      - DATABASE_URL=postgresql://postgres:password@db:5432/mydb
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/mydb
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=password
       - DYNAMODB_ENDPOINT=http://dynamodb-local:8000
       - AWS_REGION=ap-northeast-1
       - AWS_ACCESS_KEY_ID=dummy
@@ -18,8 +20,8 @@ services:
 
   frontend:
     build:
-      context: ./frontend
-      dockerfile: Dockerfile
+      context: ./frontend/src
+      dockerfile: ../../docker/frontend/Dockerfile
     ports:
       - "3000:3000"
     environment:

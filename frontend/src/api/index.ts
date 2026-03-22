@@ -18,6 +18,7 @@ import {
   mockGetUsers,
   mockRegisterUser,
   mockUpdateUser,
+  mockSearchUsers,
   MOCK_CURRENT_USER_ID,
 } from './mock/users';
 import {
@@ -29,8 +30,10 @@ import {
 } from './mock/chats';
 import {
   clientGetUsers,
+  clientSearchUsers,
   clientRegisterUser,
   clientUpdateUser,
+  clientDeleteUser,
   clientGetChats,
   clientGetChatMessages,
   clientMarkMessagesRead,
@@ -50,6 +53,10 @@ export function getUsers(userId?: string): Promise<User[]> {
   return USE_MOCK ? mockGetUsers(userId) : clientGetUsers(userId);
 }
 
+export function searchUsers(keyword: string): Promise<User[]> {
+  return USE_MOCK ? mockSearchUsers(keyword) : clientSearchUsers(keyword);
+}
+
 export function registerUser(
   req: RegisterUserRequest
 ): Promise<{ userId: string }> {
@@ -60,9 +67,25 @@ export function updateUser(req: UpdateUserRequest): Promise<void> {
   return USE_MOCK ? mockUpdateUser(req) : clientUpdateUser(req);
 }
 
+export function deleteUser(userId: string): Promise<void> {
+  if (USE_MOCK) {
+    // モックでは UpdateUser の deleted フラグを使う
+    return mockUpdateUser({
+      userId,
+      userName: '',
+      workingStatus: '不在',
+      deleted: true,
+    });
+  }
+  return clientDeleteUser(userId);
+}
+
 // -------------------- Chat --------------------
-export function getChats(userId: string): Promise<{ chats: ChatSummary[] }> {
-  return USE_MOCK ? mockGetChats(userId) : clientGetChats(userId);
+// バックエンドは ChatSummary[] を返す。{ chats: [...] } にラップして返す。
+export async function getChats(userId: string): Promise<{ chats: ChatSummary[] }> {
+  if (USE_MOCK) return mockGetChats(userId);
+  const chats = await clientGetChats(userId);
+  return { chats };
 }
 
 export function getChatMessages(
@@ -85,10 +108,17 @@ export function sendReaction(req: SendReactionRequest): Promise<void> {
   return USE_MOCK ? mockSendReaction(req) : clientSendReaction(req);
 }
 
-export function markMessagesRead(chatId: string, userId: string): Promise<void> {
-  return USE_MOCK
-    ? mockMarkMessagesRead(chatId, userId)
-    : clientMarkMessagesRead(chatId, userId);
+/**
+ * チャット内の未読メッセージを既読にする。
+ * messageIds: 既読にするメッセージID一覧（実APIでは個別にPUTを呼ぶ）
+ */
+export function markMessagesRead(
+  chatId: string,
+  userId: string,
+  messageIds?: string[]
+): Promise<void> {
+  if (USE_MOCK) return mockMarkMessagesRead(chatId, userId);
+  return clientMarkMessagesRead(chatId, userId, messageIds ?? []);
 }
 
 // -------------------- Image URL --------------------

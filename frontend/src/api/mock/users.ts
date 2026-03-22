@@ -79,6 +79,20 @@ export async function mockGetUsers(userId?: string): Promise<User[]> {
   return users.filter((u) => !u.deleted);
 }
 
+export async function mockSearchUsers(keyword: string): Promise<User[]> {
+  await delay(300);
+  const users = loadUsers().filter((u) => !u.deleted);
+  if (!keyword.trim()) return users;
+  const kw = keyword.toLowerCase();
+  return users.filter(
+    (u) =>
+      u.userName.toLowerCase().includes(kw) ||
+      u.userId.toLowerCase().includes(kw) ||
+      (u.departmentName ?? '').toLowerCase().includes(kw) ||
+      (u.primaryHeadOfficeName ?? '').toLowerCase().includes(kw)
+  );
+}
+
 export async function mockRegisterUser(
   req: RegisterUserRequest
 ): Promise<{ userId: string }> {

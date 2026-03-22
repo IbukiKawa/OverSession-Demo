@@ -116,7 +116,11 @@ export default function ChatPage() {
         setMessages(res.messages);
         setNextCursor(res.nextCursor ?? null);
         setScrollTrigger(1);
-        markMessagesRead(chatId, CURRENT_USER_ID).catch(() => {});
+        // 相手から届いた未読メッセージのIDを収集し、個別に既読化する
+        const unreadIds = res.messages
+          .filter((m) => m.senderUserId !== CURRENT_USER_ID && !m.readAt)
+          .map((m) => m.messageId);
+        markMessagesRead(chatId, CURRENT_USER_ID, unreadIds).catch(() => {});
       })
       .catch((e) => {
         setError(e?.reason ?? 'メッセージの取得に失敗しました');

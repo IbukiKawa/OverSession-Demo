@@ -12,7 +12,7 @@ import Alert from '@mui/material/Alert';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import AddIcon from '@mui/icons-material/Add';
 import type { User } from '@/api/types';
-import { getUsers } from '@/api';
+import { getUsers, searchUsers } from '@/api';
 import UserSearchBar from '@/component/user/UserSearchBar';
 import UserTable from '@/component/user/UserTable';
 import UserForm from '@/component/user/UserForm';
@@ -23,11 +23,13 @@ export default function UsersPage() {
   const [error, setError] = useState<string | null>(null);
   const [editTarget, setEditTarget] = useState<User | 'new' | null>(null);
 
-  async function fetchUsers(userId?: string) {
+  async function fetchUsers(keyword?: string) {
     setLoading(true);
     setError(null);
     try {
-      const result = await getUsers(userId || undefined);
+      const result = keyword
+        ? await searchUsers(keyword)
+        : await getUsers();
       setUsers(result);
     } catch (e: unknown) {
       const err = e as { reason?: string };

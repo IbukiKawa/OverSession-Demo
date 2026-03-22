@@ -8,7 +8,6 @@ import type {
   SendReactionRequest,
   ApiError,
   CreateChatRequest,
-  SearchUserRequest,
 } from '@/api/types';
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? '';
@@ -44,86 +43,133 @@ async function request<T>(
 
 export async function clientGetUsers(userId?: string): Promise<User[]> {
   const query = userId ? { userId } : undefined;
-  return request<User[]>('GET', `/api/users/`, { query });
+  return request<User[]>('GET', '/api/users', { query });
 }
 
+export async function clientSearchUsers(keyword: string): Promise<User[]> {
+  return request<User[]>('GET', '/api/users/search', { query: { keyword } });
+}
 
 export async function clientRegisterUser(
   req: RegisterUserRequest
 ): Promise<{ userId: string }> {
-  return request<{ userId: string }>('POST', '/api/users', { body: req });
+  // バックエンドは User オブジェクトを受け取り、String (userId) を返す
+  const body: Record<string, unknown> = {
+    userName: req.userName,
+    primaryHeadOfficeName: req.primaryHeadOfficeName,
+    secondaryHeadOfficeName: req.secondaryHeadOfficeName,
+    departmentName: req.departmentName,
+    officeId: req.officeId,
+    floor: req.floor,
+    gender: req.gender,
+    affiliationYear: req.affiliationYear,
+    workingStatus: req.workingStatus,
+    matchingUserId: req.matchingUserId,
+    pictureName: req.userImageUrl, // userImageUrl → pictureName
+    deleted: false,
+  };
+  const userId = await request<string>('POST', '/api/users', { body });
+  return { userId };
 }
 
 export async function clientUpdateUser(req: UpdateUserRequest): Promise<void> {
-  return request<void>('PUT', `/api/users/${req.userId}`, { body: req });
+  // バックエンドは User オブジェクトを受け取る。userImageUrl → pictureName に変換
+  const body: Record<string, unknown> = {
+    userId: req.userId,
+    userName: req.userName,
+    primaryHeadOfficeName: req.primaryHeadOfficeName,
+    secondaryHeadOfficeName: req.secondaryHeadOfficeName,
+    departmentName: req.departmentName,
+    officeId: req.officeId,
+    floor: req.floor,
+    gender: req.gender,
+    affiliationYear: req.affiliationYear,
+    workingStatus: req.workingStatus,
+    matchingUserId: req.matchingUserId,
+    pictureName: req.userImageUrl, // userImageUrl → pictureName
+    deleted: req.deleted,
+  };
+  return request<void>('PUT', `/api/users/${req.userId}`, { body });
 }
 
-export async function clientSearchUsers(keyword: string): Promise<User[]> {
-  const query = { keyword };
-  return request<User[]>('GET', `/api/users/search`, { query });
+export async function clientDeleteUser(userId: string): Promise<void> {
+  return request<void>('DELETE', `/api/users/${userId}`);
 }
 
+// バックエンドは ChatSummary[] をフラットな配列で返す
 export async function clientGetChats(
   userId: string
-): Promise<{ chats: ChatSummary[] }> {
-  return request<{ chats: ChatSummary[] }>('GET', '/api/chats', {
+): Promise<ChatSummary[]> {
+  return request<ChatSummary[]>('GET', '/api/chats', {
     query: { userId },
   });
 }
 
 export async function clientGetChat(
-  userId: string,
   chatId: string,
-): Promise<{ chat: ChatSummary }> {
-  return request<{ chat: ChatSummary }>('GET', '/api/chats/'+chatId, {
-    query: { userId },
-  });
+): Promise<ChatSummary> {
+  return request<ChatSummary>('GET', `/api/chats/${chatId}`);
 }
 
+// バックエンドは Message[] をフラットな配列で返す（nextCursor なし）
 export async function clientGetChatMessages(
   chatId: string,
   cursor?: string,
   limit = 20
 ): Promise<{ messages: Message[]; nextCursor: string | null }> {
-  const query: Record<string, string> = { chatId, limit: String(limit) };
+  const query: Record<string, string> = { limit: String(limit) };
   if (cursor) query.cursor = cursor;
-  return request<{ messages: Message[]; nextCursor: string | null }>(
+  const messages = await request<Message[]>(
     'GET',
     `/api/chats/${chatId}/messages`,
     { query }
   );
+  // バックエンドが返すリストが limit 件ちょうどなら、まだ過去ログがある可能性あり
+  const nextCursor = messages.length >= limit ? messages[0].messageId : null;
+  return { messages, nextCursor };
 }
 
 export async function createChat(
   req: CreateChatRequest
-): Promise<{ userId1: string, userId2: string }> {
-  return request<{ userId1: string, userId2: string }>(
-    'POST',
-    '/api/chats',
-    { body: req }
-  );
+): Promise<string> {
+  // バックエンドは chatId を String で返す
+  return request<string>('POST', '/api/chats', { body: req });
 }
 
 export async function clientSendMessage(
   req: SendMessageRequest
 ): Promise<{ messageId: string; sentAt: string }> {
-  return request<{ messageId: string; sentAt: string }>(
+  // バックエンドは messageId を String で返す
+  const messageId = await request<string>(
     'POST',
     `/api/chats/${req.chatId}/messages`,
-    { body: req }
+    { body: { senderUserId: req.senderUserId, text: req.text } }
   );
+  return { messageId, sentAt: new Date().toISOString() };
 }
 
 export async function clientSendReaction(req: SendReactionRequest): Promise<void> {
-  return request<void>('POST', '/api/chats/reaction', { body: req });
+  // POST /api/chats/{chatId}/messages/{messageId}/reactions
+  // body: { userId, reactionType }
+  return request<void>(
+    'POST',
+    `/api/chats/${req.chatId}/messages/${req.messageId}/reactions`,
+    { body: { userId: req.reactorUserId, reactionType: req.type } }
+  );
 }
 
 export async function clientMarkMessagesRead(
   chatId: string,
   userId: string,
-  messageId: string,
+  messageIds: string[]
 ): Promise<void> {
-  return request<void>('POST', `/api/chats/${chatId}/messages/${messageId}/read`, {
-    body: { chatId, userId },
-  });
+  // バックエンドはメッセージ1件ずつ PUT で既読化
+  // PUT /api/chats/{chatId}/messages/{messageId}/read, body: { readerId }
+  await Promise.all(
+    messageIds.map((messageId) =>
+      request<void>('PUT', `/api/chats/${chatId}/messages/${messageId}/read`, {
+        body: { readerId: userId },
+      })
+    )
+  );
 }

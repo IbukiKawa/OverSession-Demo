@@ -7,6 +7,8 @@ import type {
   SendMessageRequest,
   SendReactionRequest,
   ApiError,
+  CreateChatRequest,
+  SearchUserRequest,
 } from '@/api/types';
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? '';
@@ -42,23 +44,38 @@ async function request<T>(
 
 export async function clientGetUsers(userId?: string): Promise<User[]> {
   const query = userId ? { userId } : undefined;
-  return request<User[]>('GET', '/api/get/user', { query });
+  return request<User[]>('GET', `/api/users/`, { query });
 }
+
 
 export async function clientRegisterUser(
   req: RegisterUserRequest
 ): Promise<{ userId: string }> {
-  return request<{ userId: string }>('POST', '/api/post/user', { body: req });
+  return request<{ userId: string }>('POST', '/api/users', { body: req });
 }
 
 export async function clientUpdateUser(req: UpdateUserRequest): Promise<void> {
-  return request<void>('PUT', '/api/put/user', { body: req });
+  return request<void>('PUT', `/api/users/${req.userId}`, { body: req });
+}
+
+export async function clientSearchUsers(keyword: string): Promise<User[]> {
+  const query = { keyword };
+  return request<User[]>('GET', `/api/users/search`, { query });
 }
 
 export async function clientGetChats(
   userId: string
 ): Promise<{ chats: ChatSummary[] }> {
-  return request<{ chats: ChatSummary[] }>('GET', '/api/get/chats', {
+  return request<{ chats: ChatSummary[] }>('GET', '/api/chats', {
+    query: { userId },
+  });
+}
+
+export async function clientGetChat(
+  userId: string,
+  chatId: string,
+): Promise<{ chat: ChatSummary }> {
+  return request<{ chat: ChatSummary }>('GET', '/api/chats/'+chatId, {
     query: { userId },
   });
 }
@@ -72,8 +89,18 @@ export async function clientGetChatMessages(
   if (cursor) query.cursor = cursor;
   return request<{ messages: Message[]; nextCursor: string | null }>(
     'GET',
-    '/api/get/chat/messages',
+    `/api/chats/${chatId}/messages`,
     { query }
+  );
+}
+
+export async function createChat(
+  req: CreateChatRequest
+): Promise<{ userId1: string, userId2: string }> {
+  return request<{ userId1: string, userId2: string }>(
+    'POST',
+    '/api/chats',
+    { body: req }
   );
 }
 
@@ -82,20 +109,21 @@ export async function clientSendMessage(
 ): Promise<{ messageId: string; sentAt: string }> {
   return request<{ messageId: string; sentAt: string }>(
     'POST',
-    '/api/post/chat/message',
+    `/api/chats/${req.chatId}/messages`,
     { body: req }
   );
 }
 
 export async function clientSendReaction(req: SendReactionRequest): Promise<void> {
-  return request<void>('POST', '/api/post/chat/reaction', { body: req });
+  return request<void>('POST', '/api/chats/reaction', { body: req });
 }
 
 export async function clientMarkMessagesRead(
   chatId: string,
-  userId: string
+  userId: string,
+  messageId: string,
 ): Promise<void> {
-  return request<void>('POST', '/api/post/chat/read', {
+  return request<void>('POST', `/api/chats/${chatId}/messages/${messageId}/read`, {
     body: { chatId, userId },
   });
 }

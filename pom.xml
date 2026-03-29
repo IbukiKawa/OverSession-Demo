@@ -43,6 +43,20 @@
             <version>42.7.3</version>
         </dependency>
 
+        <!-- Doma Core -->
+        <dependency>
+            <groupId>org.seasar.doma</groupId>
+            <artifactId>doma-core</artifactId>
+            <version>2.55.0</version>
+        </dependency>
+
+        <!-- Doma Spring Boot Starter -->
+        <dependency>
+            <groupId>org.seasar.doma.boot</groupId>
+            <artifactId>doma-spring-boot-starter</artifactId>
+            <version>1.7.0</version>
+        </dependency>
+
         <!-- JAXB API (Java 11+ で削除されたため手動追加) -->
         <dependency>
             <groupId>jakarta.xml.bind</groupId>
@@ -98,6 +112,16 @@
                 <configuration>
                     <source>11</source>
                     <target>11</target>
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>org.seasar.doma</groupId>
+                            <artifactId>doma-processor</artifactId>
+                            <version>2.55.0</version>
+                        </path>
+                    </annotationProcessorPaths>
+                    <compilerArgs>
+                        <arg>-Adoma.resources.dir=${project.basedir}/backend/src/main/resources</arg>
+                    </compilerArgs>
                 </configuration>
             </plugin>
             

@@ -2,11 +2,17 @@ package com.oversession.model;
 
 import java.time.LocalDateTime;
 import java.util.Objects;
+import org.seasar.doma.Entity;
+import org.seasar.doma.Id;
+import org.seasar.doma.jdbc.entity.NamingType;
 
 /**
- * チャットサマリーエンティティ - frontend types.tsのChatSummary interfaceに対応
+ * チャットサマリー - SELECT結果マッピング用（DBテーブルなし）
+ * chat_participants + messages + users を結合して生成する
  */
+@Entity(naming = NamingType.SNAKE_LOWER_CASE)
 public class ChatSummary {
+    @Id
     private String chatId;
     private String partnerUserId;
     private String partnerUserName;

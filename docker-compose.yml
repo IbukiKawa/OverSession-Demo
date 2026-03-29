@@ -22,10 +22,14 @@ services:
     build:
       context: ./frontend/src
       dockerfile: ../../docker/frontend/Dockerfile
+      args:
+        # NEXT_PUBLIC_* はビルド時に埋め込まれるため build.args で渡す
+        - NEXT_PUBLIC_DATA_SOURCE=api
+        # ブラウザからアクセスするため localhost を使用（backend:8080 は Docker 内専用）
+        - NEXT_PUBLIC_API_BASE_URL=http://localhost:8080
+        - NEXT_PUBLIC_CURRENT_USER_ID=user01
     ports:
       - "3000:3000"
-    environment:
-      - NEXT_PUBLIC_API_URL=http://backend:8080
     depends_on:
       - backend
 

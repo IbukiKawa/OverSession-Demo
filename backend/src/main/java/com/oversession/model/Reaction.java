@@ -1,24 +1,33 @@
 package com.oversession.model;
 
 import java.util.Objects;
+import org.seasar.doma.Entity;
+import org.seasar.doma.Id;
+import org.seasar.doma.Table;
+import org.seasar.doma.jdbc.entity.NamingType;
 
 /**
  * リアクションエンティティ。
- * API設計書「リアクション送信」に対応。
+ * reactions テーブルにマッピング (message_id, user_id, reaction_type の複合主キー)
  */
+@Entity(naming = NamingType.SNAKE_LOWER_CASE)
+@Table(name = "reactions")
 public class Reaction {
 
+    @Id
     private String messageId;
+    @Id
     private String userId;
-    private String emoji;
+    @Id
+    private Integer reactionType;
 
     public Reaction() {
     }
 
-    public Reaction(String messageId, String userId, String emoji) {
+    public Reaction(String messageId, String userId, Integer reactionType) {
         this.messageId = messageId;
         this.userId = userId;
-        this.emoji = emoji;
+        this.reactionType = reactionType;
     }
 
     // --- getter / setter ---
@@ -39,12 +48,12 @@ public class Reaction {
         this.userId = userId;
     }
 
-    public String getEmoji() {
-        return emoji;
+    public Integer getReactionType() {
+        return reactionType;
     }
 
-    public void setEmoji(String emoji) {
-        this.emoji = emoji;
+    public void setReactionType(Integer reactionType) {
+        this.reactionType = reactionType;
     }
 
     // --- equals / hashCode / toString ---
@@ -56,12 +65,12 @@ public class Reaction {
         Reaction that = (Reaction) o;
         return Objects.equals(messageId, that.messageId)
                 && Objects.equals(userId, that.userId)
-                && Objects.equals(emoji, that.emoji);
+                && Objects.equals(reactionType, that.reactionType);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(messageId, userId, emoji);
+        return Objects.hash(messageId, userId, reactionType);
     }
 
     @Override
@@ -69,7 +78,7 @@ public class Reaction {
         return "Reaction{" +
                 "messageId='" + messageId + '\'' +
                 ", userId='" + userId + '\'' +
-                ", emoji='" + emoji + '\'' +
+                ", reactionType=" + reactionType +
                 '}';
     }
 }

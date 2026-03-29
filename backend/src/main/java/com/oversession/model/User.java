@@ -1,11 +1,18 @@
 package com.oversession.model;
 
 import java.util.Objects;
+import org.seasar.doma.Entity;
+import org.seasar.doma.Id;
+import org.seasar.doma.Table;
+import org.seasar.doma.jdbc.entity.NamingType;
 
 /**
  * Userエンティティ - frontend types.tsのUser interfaceに対応
  */
+@Entity(naming = NamingType.SNAKE_LOWER_CASE)
+@Table(name = "users")
 public class User {
+    @Id
     private String userId;
     private String userName;
     private String primaryHeadOfficeName;

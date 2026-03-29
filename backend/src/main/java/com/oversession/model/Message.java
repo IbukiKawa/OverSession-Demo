@@ -4,16 +4,25 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import org.seasar.doma.Entity;
+import org.seasar.doma.Id;
+import org.seasar.doma.Table;
+import org.seasar.doma.Transient;
+import org.seasar.doma.jdbc.entity.NamingType;
 
 /**
  * メッセージエンティティ - frontend types.tsのMessage interfaceに対応
  */
+@Entity(naming = NamingType.SNAKE_LOWER_CASE)
+@Table(name = "messages")
 public class Message {
+    @Id
     private String messageId;
     private String chatId;
     private String senderUserId;
     private String text;
     private LocalDateTime sentAt;
+    @Transient
     private List<MessageReaction> reactions;
     private LocalDateTime readAt; // null=未読
 

@@ -37,8 +37,21 @@ async function request<T>(
     throw error;
   }
 
-  if (res.status === 204) return undefined as T;
-  return res.json() as Promise<T>;
+  // 204 No Content、または空ボディ (Content-Length: 0) の場合は json パースをスキップ
+  const contentLength = res.headers.get('content-length');
+  if (res.status === 204 || contentLength === '0') return undefined as T;
+
+  // ボディがテキストとして空の場合もガード
+  const text = await res.text();
+  if (!text) return undefined as T;
+
+  // JSON パースを試み、失敗した場合は生のテキストを返す
+  // （バックエンドが String を直接返すエンドポイント用）
+  try {
+    return JSON.parse(text) as T;
+  } catch {
+    return text as unknown as T;
+  }
 }
 
 export async function clientGetUsers(userId?: string): Promise<User[]> {

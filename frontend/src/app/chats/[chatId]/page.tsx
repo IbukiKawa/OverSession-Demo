@@ -12,6 +12,7 @@ import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import CloseIcon from '@mui/icons-material/Close';
+import PersonIcon from '@mui/icons-material/Person';
 import type { Message, ReactionType, User } from '@/api/types';
 import {
   getChatMessages,
@@ -21,8 +22,8 @@ import {
   getChats,
   getUsers,
   getPictureUrl,
-  CURRENT_USER_ID,
 } from '@/api';
+import { getCurrentUser } from '@/lib/session';
 import ChatHeader from '@/component/chat/ChatHeader';
 import MessageList from '@/component/chat/MessageList';
 import MessageComposer from '@/component/chat/MessageComposer';
@@ -77,10 +78,35 @@ function ProfileModal({ user, onClose }: { user: User; onClose: () => void }) {
   );
 }
 
+function NoUserScreen() {
+  return (
+    <Box
+      display="flex"
+      flexDirection="column"
+      alignItems="center"
+      justifyContent="center"
+      sx={{ height: '100vh', gap: 2, px: 3 }}
+    >
+      <PersonIcon sx={{ fontSize: 64, color: 'text.disabled' }} />
+      <Typography variant="h6" color="text.secondary" textAlign="center">
+        ログインユーザが選択されていません
+      </Typography>
+      <Typography variant="body2" color="text.secondary" textAlign="center">
+        ユーザ管理画面からユーザを選択してチャットを開始してください。
+      </Typography>
+      <Button variant="contained" href="/users">
+        ユーザ管理へ戻る
+      </Button>
+    </Box>
+  );
+}
+
 export default function ChatPage() {
   const params = useParams();
   const chatId = params.chatId as string;
 
+  // undefined = 未確認, null = 未選択, User = 選択済み
+  const [currentUser, setCurrentUser_] = useState<User | null | undefined>(undefined);
   const [messages, setMessages] = useState<Message[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -93,9 +119,19 @@ export default function ChatPage() {
   const [scrollTrigger, setScrollTrigger] = useState(0);
   const initialized = useRef(false);
 
+  // SessionStorage からログインユーザを取得
+  useEffect(() => {
+    const user = getCurrentUser();
+    setCurrentUser_(user);
+    if (!user) {
+      setLoading(false);
+    }
+  }, []);
+
   // 相手情報取得
   useEffect(() => {
-    getChats(CURRENT_USER_ID).then((res) => {
+    if (!currentUser) return;
+    getChats(currentUser.userId).then((res) => {
       const chat = res.chats.find((c) => c.chatId === chatId);
       if (chat) {
         setPartnerName(chat.partnerUserName);
@@ -103,11 +139,11 @@ export default function ChatPage() {
         setPartnerImageUrl(getPictureUrl(chat.partnerPictureName));
       }
     });
-  }, [chatId]);
+  }, [chatId, currentUser]);
 
   // 初期メッセージ読み込み & 既読処理
   useEffect(() => {
-    if (initialized.current) return;
+    if (!currentUser || initialized.current) return;
     initialized.current = true;
 
     setLoading(true);
@@ -116,17 +152,16 @@ export default function ChatPage() {
         setMessages(res.messages);
         setNextCursor(res.nextCursor ?? null);
         setScrollTrigger(1);
-        // 相手から届いた未読メッセージのIDを収集し、個別に既読化する
         const unreadIds = res.messages
-          .filter((m) => m.senderUserId !== CURRENT_USER_ID && !m.readAt)
+          .filter((m) => m.senderUserId !== currentUser.userId && !m.readAt)
           .map((m) => m.messageId);
-        markMessagesRead(chatId, CURRENT_USER_ID, unreadIds).catch(() => {});
+        markMessagesRead(chatId, currentUser.userId, unreadIds).catch(() => {});
       })
       .catch((e) => {
         setError(e?.reason ?? 'メッセージの取得に失敗しました');
       })
       .finally(() => setLoading(false));
-  }, [chatId]);
+  }, [chatId, currentUser]);
 
   // 過去ログ読み込み
   const handleLoadMore = useCallback(async () => {
@@ -146,8 +181,9 @@ export default function ChatPage() {
 
   // メッセージ送信
   async function handleSend(text: string) {
+    if (!currentUser) return;
     setError(null);
-    const res = await sendMessage({ chatId, senderUserId: CURRENT_USER_ID, text }).catch(
+    const res = await sendMessage({ chatId, senderUserId: currentUser.userId, text }).catch(
       (e: unknown) => {
         const err = e as { reason?: string };
         setError(err?.reason ?? 'メッセージの送信に失敗しました');
@@ -157,7 +193,7 @@ export default function ChatPage() {
     const newMsg: Message = {
       messageId: res.messageId,
       chatId,
-      senderUserId: CURRENT_USER_ID,
+      senderUserId: currentUser.userId,
       text,
       sentAt: res.sentAt,
       readAt: null,
@@ -169,9 +205,10 @@ export default function ChatPage() {
   // リアクション送信
   const handleReact = useCallback(
     async (messageId: string, type: ReactionType) => {
+      if (!currentUser) return;
       setError(null);
       try {
-        await sendReaction({ chatId, messageId, type, reactorUserId: CURRENT_USER_ID });
+        await sendReaction({ chatId, messageId, type, reactorUserId: currentUser.userId });
         setMessages((prev) =>
           prev.map((m) => {
             if (m.messageId !== messageId) return m;
@@ -198,7 +235,7 @@ export default function ChatPage() {
         setError(err?.reason ?? 'リアクションの送信に失敗しました');
       }
     },
-    [chatId]
+    [chatId, currentUser]
   );
 
   // 相手プロフィール表示
@@ -212,6 +249,11 @@ export default function ChatPage() {
     }
   }
 
+  // SessionStorage の確認中は何も表示しない（hydration mismatch 防止）
+  if (currentUser === undefined) return null;
+
+  if (currentUser === null) return <NoUserScreen />;
+
   return (
     <Box display="flex" flexDirection="column" sx={{ height: '100vh', maxWidth: 600, mx: 'auto' }}>
       {loading && <LoadingOverlay />}
@@ -220,7 +262,7 @@ export default function ChatPage() {
 
       <MessageList
         messages={messages}
-        currentUserId={CURRENT_USER_ID}
+        currentUserId={currentUser.userId}
         partnerName={partnerName}
         partnerImageUrl={partnerImageUrl}
         onReact={handleReact}

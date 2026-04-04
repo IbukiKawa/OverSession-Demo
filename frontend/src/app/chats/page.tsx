@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Container from '@mui/material/Container';
 import AppBar from '@mui/material/AppBar';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
@@ -16,8 +15,10 @@ import CircularProgress from '@mui/material/CircularProgress';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Divider from '@mui/material/Divider';
-import type { ChatSummary } from '@/api/types';
-import { getChats, getPictureUrl, CURRENT_USER_ID } from '@/api';
+import PersonIcon from '@mui/icons-material/Person';
+import type { ChatSummary, User } from '@/api/types';
+import { getChats, getPictureUrl } from '@/api';
+import { getCurrentUser } from '@/lib/session';
 import Avatar from '@/component/chat/Avatar';
 
 function formatLastMessageAt(isoString: string): string {
@@ -32,26 +33,68 @@ function formatLastMessageAt(isoString: string): string {
   return `${d.getMonth() + 1}/${d.getDate()}`;
 }
 
+function NoUserScreen() {
+  return (
+    <Box
+      display="flex"
+      flexDirection="column"
+      alignItems="center"
+      justifyContent="center"
+      sx={{ minHeight: '100vh', gap: 2, px: 3 }}
+    >
+      <PersonIcon sx={{ fontSize: 64, color: 'text.disabled' }} />
+      <Typography variant="h6" color="text.secondary" textAlign="center">
+        ログインユーザが選択されていません
+      </Typography>
+      <Typography variant="body2" color="text.secondary" textAlign="center">
+        ユーザ管理画面からユーザを選択してチャットを開始してください。
+      </Typography>
+      <Button variant="contained" href="/users">
+        ユーザ管理へ戻る
+      </Button>
+    </Box>
+  );
+}
+
 export default function ChatsPage() {
   const router = useRouter();
+  const [currentUser, setCurrentUser_] = useState<User | null | undefined>(undefined);
   const [chats, setChats] = useState<ChatSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    getChats(CURRENT_USER_ID)
+    const user = getCurrentUser();
+    setCurrentUser_(user);
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+    getChats(user.userId)
       .then((res) => setChats(res.chats))
       .catch((e) => setError(e?.reason ?? 'チャット一覧の取得に失敗しました'))
       .finally(() => setLoading(false));
   }, []);
 
+  // SessionStorage の確認中は何も表示しない（hydration mismatch 防止）
+  if (currentUser === undefined) return null;
+
+  if (currentUser === null) return <NoUserScreen />;
+
   return (
     <Box sx={{ maxWidth: 600, mx: 'auto', minHeight: '100vh' }}>
       <AppBar position="sticky" color="inherit" elevation={1}>
         <Toolbar>
-          <Typography variant="h6" fontWeight="bold" sx={{ flex: 1 }}>
-            チャット
-          </Typography>
+          <Box display="flex" alignItems="center" gap={1} sx={{ flex: 1 }}>
+            <Avatar
+              name={currentUser.userName}
+              imageUrl={getPictureUrl(currentUser.pictureName)}
+              size="sm"
+            />
+            <Typography variant="h6" fontWeight="bold">
+              チャット
+            </Typography>
+          </Box>
           <Button href="/users" size="small">
             ユーザ管理
           </Button>

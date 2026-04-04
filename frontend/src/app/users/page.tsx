@@ -16,12 +16,14 @@ import { getUsers, searchUsers } from '@/api';
 import UserSearchBar from '@/component/user/UserSearchBar';
 import UserTable from '@/component/user/UserTable';
 import UserForm from '@/component/user/UserForm';
+import UserSelectModal from '@/component/user/UserSelectModal';
 
 export default function UsersPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editTarget, setEditTarget] = useState<User | 'new' | null>(null);
+  const [selectModalOpen, setSelectModalOpen] = useState(false);
 
   async function fetchUsers(keyword?: string) {
     setLoading(true);
@@ -52,7 +54,12 @@ export default function UsersPage() {
     <Box sx={{ minHeight: '100vh' }}>
       <AppBar position="sticky" color="inherit" elevation={1}>
         <Toolbar>
-          <Button href="/chats" startIcon={<ArrowBackIcon />} size="small" sx={{ mr: 2 }}>
+          <Button
+            startIcon={<ArrowBackIcon />}
+            size="small"
+            sx={{ mr: 2 }}
+            onClick={() => setSelectModalOpen(true)}
+          >
             チャット
           </Button>
           <Typography variant="h6" fontWeight="bold" sx={{ flex: 1 }}>
@@ -94,6 +101,11 @@ export default function UsersPage() {
           onCancel={() => setEditTarget(null)}
         />
       )}
+
+      <UserSelectModal
+        open={selectModalOpen}
+        onCancel={() => setSelectModalOpen(false)}
+      />
     </Box>
   );
 }

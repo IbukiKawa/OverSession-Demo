@@ -1,7 +1,7 @@
 package com.oversession.model;
 
 /** */
-@javax.annotation.Generated(value = { "Doma", "2.55.0" }, date = "2026-03-29T22:11:23.299+0900")
+@javax.annotation.Generated(value = { "Doma", "2.55.0" }, date = "2026-04-04T10:44:19.371+0900")
 @org.seasar.doma.EntityTypeImplementation
 public final class _User extends org.seasar.doma.jdbc.entity.AbstractEntityType<com.oversession.model.User> {
 

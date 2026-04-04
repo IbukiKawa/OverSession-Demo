@@ -2,7 +2,7 @@ package com.oversession.dao.doma;
 
 /** */
 @org.springframework.stereotype.Repository()
-@javax.annotation.Generated(value = { "Doma", "2.55.0" }, date = "2026-03-29T22:11:23.380+0900")
+@javax.annotation.Generated(value = { "Doma", "2.55.0" }, date = "2026-04-04T10:44:19.473+0900")
 @org.seasar.doma.DaoImplementation
 public class ChatParticipantDomaDaoImpl implements com.oversession.dao.doma.ChatParticipantDomaDao, org.seasar.doma.jdbc.ConfigProvider {
 

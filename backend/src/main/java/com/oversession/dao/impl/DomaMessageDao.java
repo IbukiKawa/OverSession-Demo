@@ -7,7 +7,7 @@ import com.oversession.model.Message;
 import com.oversession.model.MessageReaction;
 import com.oversession.model.Reaction;
 
-import org.springframework.context.annotation.Primary;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
  * SQL は META-INF/com/oversession/dao/doma/MessageDomaDao/ 配下の .sql ファイルで管理
  */
 @Repository
-@Primary
+@ConditionalOnProperty(name = "message.dao.type", havingValue = "doma")
 public class DomaMessageDao implements MessageDao {
 
     private final MessageDomaDao messageDomaDao;

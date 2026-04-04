@@ -4,8 +4,7 @@
 -- =============================================================
 
 -- 既存テーブルを削除して再作成（開発環境用）
-DROP TABLE IF EXISTS reactions CASCADE;
-DROP TABLE IF EXISTS messages CASCADE;
+-- messages, reactions は DynamoDB に移行済みのため PostgreSQL には作成しない
 DROP TABLE IF EXISTS chat_participants CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
 
@@ -31,23 +30,5 @@ CREATE TABLE chat_participants (
     PRIMARY KEY (chat_id, user_id)
 );
 
-CREATE TABLE messages (
-    message_id     VARCHAR(64)  PRIMARY KEY,
-    chat_id        VARCHAR(64)  NOT NULL,
-    sender_user_id VARCHAR(64)  NOT NULL,
-    text           TEXT         NOT NULL,
-    sent_at        TIMESTAMP    NOT NULL,
-    read_at        TIMESTAMP
-);
-
-CREATE TABLE reactions (
-    message_id    VARCHAR(64) NOT NULL,
-    user_id       VARCHAR(64) NOT NULL,
-    reaction_type INTEGER     NOT NULL,
-    PRIMARY KEY (message_id, user_id, reaction_type)
-);
-
 -- インデックス
-CREATE INDEX IF NOT EXISTS idx_messages_chat_id ON messages (chat_id, sent_at);
-CREATE INDEX IF NOT EXISTS idx_reactions_message ON reactions (message_id);
 CREATE INDEX IF NOT EXISTS idx_chat_participants ON chat_participants (user_id);
